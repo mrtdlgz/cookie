@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using Cookie.Core;
 using Cookie.Input;
 using Cookie.Player.Classes;
+using Cookie.Enemy;
 using System.IO;
 
 namespace Cookie.EditorTools
@@ -256,20 +257,70 @@ namespace Cookie.EditorTools
                 gmObj.AddComponent<JuiceManager>();
             }
 
-            if (GameObject.Find("Hedef_Kuklasi") == null)
+            // 9. GELİŞMİŞ YAPAY ZEKA DÜŞMANLARI (Slime & Goblin)
+            if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects/Enemies")) 
+                AssetDatabase.CreateFolder("Assets/ScriptableObjects", "Enemies");
+
+            // --- Slime Data ---
+            EnemyData slimeData = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/ScriptableObjects/Enemies/SlimeData.asset");
+            if (slimeData == null)
             {
-                GameObject dummy = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                dummy.name = "Hedef_Kuklasi";
-                dummy.transform.position = new Vector3(3, 1, 3);
-                
-                Material dummyMat = new Material(defaultShader);
-                dummyMat.color = Color.magenta;
-                dummy.GetComponent<MeshRenderer>().sharedMaterial = dummyMat;
-                
-                dummy.AddComponent<Cookie.Combat.TargetDummy>();
+                slimeData = ScriptableObject.CreateInstance<EnemyData>();
+                slimeData.enemyName = "Zehir_Slime";
+                slimeData.maxHealth = 30f;
+                slimeData.moveSpeed = 2.5f;
+                slimeData.attackDamage = 5f;
+                slimeData.fellsFleeUrgeFromWarrior = false; // Brave slime
+                slimeData.isAggressiveToMage = true;
+                AssetDatabase.CreateAsset(slimeData, "Assets/ScriptableObjects/Enemies/SlimeData.asset");
+            }
+            
+            // --- Goblin Data ---
+            EnemyData goblinData = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/ScriptableObjects/Enemies/GoblinData.asset");
+            if (goblinData == null)
+            {
+                goblinData = ScriptableObject.CreateInstance<EnemyData>();
+                goblinData.enemyName = "Korkak_Goblin";
+                goblinData.maxHealth = 40f;
+                goblinData.moveSpeed = 4.5f; // Fast
+                goblinData.attackDamage = 15f;
+                goblinData.fellsFleeUrgeFromWarrior = true; // Runs from swords!
+                goblinData.isAggressiveToMage = true; // Chases squishy mages
+                AssetDatabase.CreateAsset(goblinData, "Assets/ScriptableObjects/Enemies/GoblinData.asset");
             }
 
-            Debug.Log("✅ İŞLEM TAMAM! Hitbox'lar, Dash ve Sarsıntılarla dolu prototip sahnemiz hazır!");
+            // Spawn Slime
+            if (GameObject.Find("Dusman_Slime") == null)
+            {
+                GameObject slime = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                slime.name = "Dusman_Slime";
+                slime.transform.position = new Vector3(4, 0.5f, 4);
+                
+                Material slimeMat = new Material(defaultShader);
+                slimeMat.color = Color.green;
+                slime.GetComponent<MeshRenderer>().sharedMaterial = slimeMat;
+                
+                EnemyAI ai = slime.AddComponent<Cookie.Enemy.EnemyAI>();
+                ai.data = slimeData;
+            }
+            
+            // Spawn Goblin
+            if (GameObject.Find("Dusman_Goblin") == null)
+            {
+                GameObject goblin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                goblin.name = "Dusman_Goblin";
+                goblin.transform.position = new Vector3(-4, 1f, 3);
+                goblin.transform.localScale = new Vector3(0.7f, 0.8f, 0.7f);
+                
+                Material gobMat = new Material(defaultShader);
+                gobMat.color = new Color(0.6f, 0.1f, 0.1f); // Dark red
+                goblin.GetComponent<MeshRenderer>().sharedMaterial = gobMat;
+                
+                EnemyAI ai = goblin.AddComponent<Cookie.Enemy.EnemyAI>();
+                ai.data = goblinData;
+            }
+
+            Debug.Log("✅ İŞLEM TAMAM! Sınıfa göre tepki veren Zeki Düşmanlar sahneye eklendi!");
         }
     }
 }

@@ -1,16 +1,17 @@
 using UnityEngine;
 using Cookie.Input;
 using Cookie.Player.Classes;
+using Cookie.Combat;
 
 namespace Cookie.Core
 {
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(InputManager))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IDamageable
     {
         [Header("Class Data Configuration")]
         [Tooltip("Assign Warrior or Mage scriptable object here")]
-        [SerializeField] private ClassData currentClass;
+        public ClassData currentClass;
         
         [Header("Camera Settings")]
         [SerializeField] private Transform cameraTransform;
@@ -55,6 +56,14 @@ namespace Cookie.Core
 
         private void Update()
         {
+            // OOB Fall Catcher
+            if (transform.position.y < -5f)
+            {
+                _characterController.enabled = false;
+                transform.position = new Vector3(0, 1.1f, 0);
+                _characterController.enabled = true;
+            }
+            
             if (_isDashing)
             {
                 HandleDash();
@@ -189,7 +198,7 @@ namespace Cookie.Core
                     // Melee Hitbox Prototype
                     GameObject hitboxObj = GameObject.CreatePrimitive(PrimitiveType.Cube); // Made it visible!
                     hitboxObj.name = "MeleeHitbox";
-                    hitboxObj.transform.position = transform.position + transform.forward * 1.2f + Vector3.up * 1f;
+                    hitboxObj.transform.position = transform.position + transform.forward * 1.2f + Vector3.up * 0.2f; // Lowered to hit small slimes!
                     hitboxObj.transform.rotation = transform.rotation;
                     hitboxObj.transform.localScale = new Vector3(1.5f, 1f, 1.5f); // Smaller, snappier size!
                     
@@ -251,6 +260,50 @@ namespace Cookie.Core
             transform.rotation = Quaternion.LookRotation(_dashDirection);
 
             Debug.Log("Dodging in direction: " + _dashDirection);
+        }
+
+        // --- IDamageable Implementation ---
+        public void TakeDamage(float amount)
+        {
+            float actualDamage = amount;
+
+            if (_inputManager.IsShielding)
+            {
+                // %80 Hasar İndirimi
+                actualDamage = amount * 0.2f;
+                Debug.Log($"<color=blue>Kalkan Aktif! Bloklanan hasar: {amount - actualDamage}. Alınan: {actualDamage}</color>");
+            }
+
+            _currentHealth -= actualDamage;
+            Debug.Log($"<color=red>Oyuncu {actualDamage} hasar aldı! Kalan Can: {_currentHealth}</color>");
+
+            // Visual feedback (Flash red)
+            MeshRenderer rnd = GetComponentInChildren<MeshRenderer>();
+            if (rnd != null)
+            {
+                StartCoroutine(FlashColorRoutine(rnd, Color.red, 0.15f));
+            }
+
+            if (_currentHealth <= 0)
+            {
+                Die();
+            }
+        }
+
+        public void Die()
+        {
+            Debug.Log("<color=black>OYUNCU ÖLDÜ!</color>");
+            // Trigger death animation/UI later
+            gameObject.SetActive(false); // Temporary death state
+        }
+        
+        private System.Collections.IEnumerator FlashColorRoutine(MeshRenderer rnd, Color flashColor, float duration)
+        {
+            Color orig = rnd.material.color;
+            rnd.material.color = flashColor;
+            yield return new WaitForSeconds(duration);
+            if (rnd != null)
+                rnd.material.color = _inputManager.IsShielding ? Color.blue : new Color(0.9f, 0.4f, 0.1f);
         }
     }
 }
