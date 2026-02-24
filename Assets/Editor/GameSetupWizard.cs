@@ -35,6 +35,7 @@ namespace Cookie.EditorTools
             // 2. OYUNCU (Player) - İlk başta inaktif yapıyoruz ki PlayerInput hatası atmasın
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.name = "Oyuncu_Player";
+            player.tag = "Player"; // Düşmanların bulabilmesi için ZORUNLU
             player.SetActive(false); // Bileşenleri eklerken Awake/OnEnable fırlatmasın diye kapattık
             player.transform.position = new Vector3(0, 1.1f, 0);
             
@@ -50,16 +51,29 @@ namespace Cookie.EditorTools
             Material noseMat = new Material(defaultShader);
             noseMat.color = Color.white;
             nose.GetComponent<MeshRenderer>().sharedMaterial = noseMat;
+            
+            GameObject sword = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sword.name = "Kilic_Asa";
+            sword.transform.SetParent(player.transform);
+            sword.transform.localPosition = new Vector3(0.7f, 0.5f, 0.6f);
+            sword.transform.localScale = new Vector3(0.2f, 0.2f, 1.2f); // Made the sword larger and visible!
+            Material swordMat = new Material(defaultShader);
+            swordMat.color = Color.gray;
+            sword.GetComponent<MeshRenderer>().sharedMaterial = swordMat;
 
             // 3. KAMERA
             Camera cam = Camera.main;
-            if (cam != null)
+            if (cam == null)
             {
-                cam.transform.position = new Vector3(0, 12, -10);
-                cam.transform.rotation = Quaternion.Euler(50, 0, 0);
-                cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = new Color(0.15f, 0.15f, 0.2f);
+                GameObject camObj = new GameObject("Main Camera");
+                camObj.tag = "MainCamera";
+                cam = camObj.AddComponent<Camera>();
             }
+            
+            cam.transform.position = new Vector3(0, 7, -6); // Move Camera much closer
+            cam.transform.rotation = Quaternion.Euler(45, 0, 0); // Adjust angle for closeness
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.15f, 0.15f, 0.2f);
 
             // 4. IŞIK
             Light sun = Object.FindObjectOfType<Light>();
@@ -76,29 +90,31 @@ namespace Cookie.EditorTools
             if (!AssetDatabase.IsValidFolder("Assets/Scripts/Input")) AssetDatabase.CreateFolder("Assets/Scripts", "Input");
             
             string inputPath = "Assets/Scripts/Input/PlayerControls.inputactions";
-            InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(inputPath);
-            if (actions == null)
-            {
-                string inputAssetJson = @"{
+            string inputAssetJson = @"{
                   ""name"": ""PlayerControls"",
                   ""maps"": [
                     {
                       ""name"": ""Player"",
                       ""id"": ""d1b32ac0-42f1-419b-a9b0-13b772fc33c9"",
                       ""actions"": [
-                        { ""name"": ""Move"", ""type"": ""Value"", ""id"": ""c32f2603-0c48-430f-b0cd-cb837ecbf892"", ""expectedControlType"": ""Vector2"", ""processors"": """", ""interactions"": """", ""initialStateCheck"": true }
+                        { ""name"": ""Move"", ""type"": ""Value"", ""id"": ""c32f2603-0c48-430f-b0cd-cb837ecbf892"", ""expectedControlType"": ""Vector2"", ""processors"": """", ""interactions"": """", ""initialStateCheck"": true },
+                        { ""name"": ""Attack"", ""type"": ""Button"", ""id"": ""cfbb8b5b-21da-4c4f-9e7f-561ca1251c14"", ""expectedControlType"": ""Button"", ""processors"": """", ""interactions"": """", ""initialStateCheck"": false },
+                        { ""name"": ""Dodge"", ""type"": ""Button"", ""id"": ""a5c9f592-3329-450f-a1f9-03a0b3f81e64"", ""expectedControlType"": ""Button"", ""processors"": """", ""interactions"": """", ""initialStateCheck"": false }
                       ],
                       ""bindings"": [
-                        { ""name"": """", ""id"": ""11cb6ebf-18b6-455b-8f35-ab35a2d60341"", ""path"": ""<Gamepad>/leftStick"", ""interactions"": """", ""processors"": """", ""groups"": """", ""action"": ""Move"", ""isComposite"": false, ""isPartOfComposite"": false }
+                        { ""name"": """", ""id"": ""11cb6ebf-18b6-455b-8f35-ab35a2d60341"", ""path"": ""<Gamepad>/leftStick"", ""interactions"": """", ""processors"": """", ""groups"": """", ""action"": ""Move"", ""isComposite"": false, ""isPartOfComposite"": false },
+                        { ""name"": """", ""id"": ""cfbb9b5b-21da-4c4f-9e7f-561ca1251c15"", ""path"": ""<Gamepad>/buttonWest"", ""interactions"": """", ""processors"": """", ""groups"": """", ""action"": ""Attack"", ""isComposite"": false, ""isPartOfComposite"": false },
+                        { ""name"": """", ""id"": ""cfbbab5b-21da-4c4f-9e7f-561ca1251c16"", ""path"": ""<Gamepad>/buttonSouth"", ""interactions"": """", ""processors"": """", ""groups"": """", ""action"": ""Dodge"", ""isComposite"": false, ""isPartOfComposite"": false }
                       ]
                     }
                   ]
                 }";
-                File.WriteAllText(inputPath, inputAssetJson);
-                AssetDatabase.ImportAsset(inputPath);
-                AssetDatabase.Refresh();
-                actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(inputPath);
-            }
+                
+            // Hata çıkmasını engellemek için her zaman zorla üzerine yazıyoruz ki yeni butonlar eklensin.
+            File.WriteAllText(inputPath, inputAssetJson);
+            AssetDatabase.ImportAsset(inputPath);
+            AssetDatabase.Refresh();
+            InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(inputPath);
 
             // CLASS Datası
             if (!AssetDatabase.IsValidFolder("Assets/ScriptableObjects")) AssetDatabase.CreateFolder("Assets", "ScriptableObjects");
@@ -178,6 +194,42 @@ namespace Cookie.EditorTools
             soStick.FindProperty("m_ControlPath").stringValue = "<Gamepad>/leftStick";
             soStick.ApplyModifiedProperties();
 
+            // Saldırı (Attack) Butonu
+            GameObject jsAttack = new GameObject("Saldiri_Butonu");
+            jsAttack.transform.SetParent(canvasObj.transform, false);
+            Image attackImage = jsAttack.AddComponent<Image>();
+            attackImage.sprite = knobSprite;
+            attackImage.color = new Color(1f, 0.4f, 0.4f, 0.8f); 
+            RectTransform attackRect = jsAttack.GetComponent<RectTransform>();
+            attackRect.anchorMin = new Vector2(1, 0);
+            attackRect.anchorMax = new Vector2(1, 0);
+            attackRect.pivot = new Vector2(1f, 0.5f);
+            attackRect.anchoredPosition = new Vector2(-250, 250); // Ekran sağı
+            attackRect.sizeDelta = new Vector2(250, 250);
+
+            OnScreenButton attackBtn = jsAttack.AddComponent<OnScreenButton>();
+            SerializedObject soAttack = new SerializedObject(attackBtn);
+            soAttack.FindProperty("m_ControlPath").stringValue = "<Gamepad>/buttonWest";
+            soAttack.ApplyModifiedProperties();
+
+            // Kaçınma (Dodge) Butonu
+            GameObject jsDodge = new GameObject("Kacinma_Butonu");
+            jsDodge.transform.SetParent(canvasObj.transform, false);
+            Image dodgeImage = jsDodge.AddComponent<Image>();
+            dodgeImage.sprite = knobSprite;
+            dodgeImage.color = new Color(0.4f, 0.8f, 1f, 0.8f); 
+            RectTransform dodgeRect = jsDodge.GetComponent<RectTransform>();
+            dodgeRect.anchorMin = new Vector2(1, 0);
+            dodgeRect.anchorMax = new Vector2(1, 0);
+            dodgeRect.pivot = new Vector2(1f, 0.5f);
+            dodgeRect.anchoredPosition = new Vector2(-100, 100); 
+            dodgeRect.sizeDelta = new Vector2(160, 160);
+
+            OnScreenButton dodgeBtn = jsDodge.AddComponent<OnScreenButton>();
+            SerializedObject soDodge = new SerializedObject(dodgeBtn);
+            soDodge.FindProperty("m_ControlPath").stringValue = "<Gamepad>/buttonSouth";
+            soDodge.ApplyModifiedProperties();
+
             // 7. EVENT SYSTEM (UI tıklamaları/sürüklemeleri için)
             UnityEngine.EventSystems.EventSystem eventSystem = Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
             if (eventSystem == null)
@@ -186,8 +238,38 @@ namespace Cookie.EditorTools
                 esObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
                 esObj.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>(); // Yeni Input Sistem Modülü ZORUNLUDUR
             }
+            // 8. TEST ve JUICE SISTEMLERI (Kamera Sarsıntısı, Vuruş Hissi ve Kukla)
+            if (cam != null)
+            {
+                CameraController camController = cam.GetComponent<CameraController>();
+                if (camController == null) camController = cam.gameObject.AddComponent<CameraController>();
+                
+                camController.SetTarget(player.transform); // Always ensure target is set!
+                SerializedObject soCam = new SerializedObject(camController);
+                soCam.FindProperty("offset").vector3Value = new Vector3(0, 7, -6); // Closer offset
+                soCam.ApplyModifiedProperties();
+            }
 
-            Debug.Log("✅ İŞLEM TAMAM! PlayerInput hatası ve görseller %100 düzeltildi.");
+            if (Object.FindObjectOfType<JuiceManager>() == null)
+            {
+                GameObject gmObj = new GameObject("Oyun_Yoneticisi_(JuiceManager)");
+                gmObj.AddComponent<JuiceManager>();
+            }
+
+            if (GameObject.Find("Hedef_Kuklasi") == null)
+            {
+                GameObject dummy = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                dummy.name = "Hedef_Kuklasi";
+                dummy.transform.position = new Vector3(3, 1, 3);
+                
+                Material dummyMat = new Material(defaultShader);
+                dummyMat.color = Color.magenta;
+                dummy.GetComponent<MeshRenderer>().sharedMaterial = dummyMat;
+                
+                dummy.AddComponent<Cookie.Combat.TargetDummy>();
+            }
+
+            Debug.Log("✅ İŞLEM TAMAM! Hitbox'lar, Dash ve Sarsıntılarla dolu prototip sahnemiz hazır!");
         }
     }
 }

@@ -8,7 +8,16 @@ namespace Cookie.Input
     {
         public Vector2 MoveInput { get; private set; }
         public bool AttackTriggered { get; private set; }
-        public bool DodgeTriggered { get; private set; }
+        public bool DashTriggered { get; private set; }
+        public bool IsShielding => _playerInput != null && _playerInput.actions["Dodge"].IsPressed();
+        
+        private PlayerInput _playerInput;
+        private float _lastDodgeTime;
+
+        private void Awake()
+        {
+            _playerInput = GetComponent<PlayerInput>();
+        }
 
         public void OnMove(InputValue value)
         {
@@ -33,13 +42,17 @@ namespace Cookie.Input
         {
             if (value.isPressed)
             {
-                DodgeTriggered = true;
+                if (Time.time - _lastDodgeTime < 0.3f)
+                {
+                    DashTriggered = true;
+                }
+                _lastDodgeTime = Time.time;
             }
         }
 
-        public void ConsumeDodge()
+        public void ConsumeDash()
         {
-            DodgeTriggered = false;
+            DashTriggered = false;
         }
     }
 }

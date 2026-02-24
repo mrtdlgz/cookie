@@ -1,75 +1,19 @@
 {
-    "version": 1,
-    "name": "PlayerControls",
-    "maps": [
-        {
-            "name": "Player",
-            "id": "9309ab3f-271b-4bce-a6e0-93df8c544271",
-            "actions": [
-                {
-                    "name": "Move",
-                    "type": "Value",
-                    "id": "6a3fa2cd-1e2f-4107-911b-8a3811e7f1ce",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
-                    "name": "Attack",
-                    "type": "Button",
-                    "id": "82ced220-d9fb-4d0c-9de7-64567c526962",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Dodge",
-                    "type": "Button",
-                    "id": "a6968e68-583a-48c8-a949-0315f576874d",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
+                  "name": "PlayerControls",
+                  "maps": [
+                    {
+                      "name": "Player",
+                      "id": "d1b32ac0-42f1-419b-a9b0-13b772fc33c9",
+                      "actions": [
+                        { "name": "Move", "type": "Value", "id": "c32f2603-0c48-430f-b0cd-cb837ecbf892", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                        { "name": "Attack", "type": "Button", "id": "cfbb8b5b-21da-4c4f-9e7f-561ca1251c14", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                        { "name": "Dodge", "type": "Button", "id": "a5c9f592-3329-450f-a1f9-03a0b3f81e64", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+                      ],
+                      "bindings": [
+                        { "name": "", "id": "11cb6ebf-18b6-455b-8f35-ab35a2d60341", "path": "<Gamepad>/leftStick", "interactions": "", "processors": "", "groups": "", "action": "Move", "isComposite": false, "isPartOfComposite": false },
+                        { "name": "", "id": "cfbb9b5b-21da-4c4f-9e7f-561ca1251c15", "path": "<Gamepad>/buttonWest", "interactions": "", "processors": "", "groups": "", "action": "Attack", "isComposite": false, "isPartOfComposite": false },
+                        { "name": "", "id": "cfbbab5b-21da-4c4f-9e7f-561ca1251c16", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "", "action": "Dodge", "isComposite": false, "isPartOfComposite": false }
+                      ]
+                    }
+                  ]
                 }
-            ],
-            "bindings": [
-                {
-                    "name": "",
-                    "id": "c7b34d82-2945-44ef-a272-681ff37c6ae3",
-                    "path": "<Gamepad>/leftStick",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Move",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "a7a4177a-20a3-4ac8-9aca-9af73ced4c38",
-                    "path": "<Gamepad>/buttonSouth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Attack",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "daccb412-75d5-43f8-861d-d95207fab063",
-                    "path": "<Gamepad>/buttonEast",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Dodge",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                }
-            ]
-        }
-    ],
-    "controlSchemes": []
-}
